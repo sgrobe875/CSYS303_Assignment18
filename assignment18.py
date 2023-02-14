@@ -6,6 +6,7 @@
 import matplotlib.pyplot as plt
 import math
 import numpy as np
+import random
 
 
 
@@ -21,6 +22,22 @@ import numpy as np
 # --> for now/to get the required output, assume connection b/w all neighbors
 
 
+
+
+# set globals
+i_0 = 1000
+gamma = 2
+GAMMA = (2*gamma) / (gamma+1)
+
+
+
+
+# takes in the node of interest and the total number of nodes in the lattice and 
+# returns the current calculation as given in the instructions
+def sink_current(i_k, N):
+    return (-1*i_0)/(N-1)
+
+
 # converts coordinates from string format 'x,y' to float(x) and float(y) 
 # as separate variables
 def get_float_coords(coord_string):
@@ -30,11 +47,30 @@ def get_float_coords(coord_string):
     return x, y
 
 
+# takes in edge in the form 'x1,y1;x2,y2' and returns floats of the four separate
+# coordinate values
+def get_points_from_edge(edge_string):
+    edge_points = edge_string.split(';')
+    point1 = edge_points[0]
+    point2 = edge_points[1]
+    x1, y1 = get_float_coords(point1)
+    x2, y2 = get_float_coords(point2)
+    return x1, y1, x2, y2
+
+
 # calculates Euclidean distance between two coordinates in string format
 def calc_distance(coord1_string, coord2_string):
     x1, y1 = get_float_coords(coord1_string)
     x2, y2 = get_float_coords(coord2_string)
     return math.sqrt((x1-x2)**2 + (y1-y2)**2)
+
+
+# takes in the edge list, returns K according to the randomly set conductances
+def calc_K(edges):
+    ks = list(edges.values())
+    ks_to_gamma_power = list(map(lambda x:pow(x,gamma),ks))
+    sum_of_ks = sum(ks_to_gamma_power)
+    return sum_of_ks ** (1/gamma)
 
 
 # takes in edge width n, draws lattice of the corresponding size and returns the
@@ -43,6 +79,10 @@ def build_lattice(n):
     # calculate some parameters based on n
     radius = n-1
     half_radius = radius/2
+    
+    # dictionary to hold all edges
+    # keys = x1,y1;x2,y2, values = k value associated with that edge
+    edges = dict()
     
     # assume the center is the origin (0,0)
     
@@ -83,14 +123,14 @@ def build_lattice(n):
         # start at vertex1 and add to the points dictionary
         x = start_x
         key = str(x) + ',' + str(y)
-        points[key] = set()
+        points[key] = {'neighbors':set()}
         
         # while we're within the bounds of this row
         while x != end_x:
             # add points, moving across the row from left to right
             x += 1
             key = str(x) + ',' + str(y)
-            points[key] = set()
+            points[key] = {'neighbors':set()}
         
         # when we've reached the end of the row, move up 1 to the next row
         y += 1
@@ -114,13 +154,13 @@ def build_lattice(n):
         # add the first point in the row to the points dict
         x = start_x
         key = str(x) + ',' + str(y)
-        points[key] = set()
+        points[key] = {'neighbors':set()}
         
         # move across the row within the bounds of the hexagon
         while x != end_x:
             x += 1
             key = str(x) + ',' + str(y)
-            points[key] = set()
+            points[key] = {'neighbors':set()}
             
         # move down to the next row
         y -= 1
@@ -141,10 +181,22 @@ def build_lattice(n):
                 # the neighbor list for point1 and for point2
                 if dist < 1.2:
                     # since neighbor list is a set, duplicates will just be skipped
-                    points[point1].add(point2)
-                    points[point2].add(point1)
+                    points[point1]['neighbors'].add(point2)
+                    points[point2]['neighbors'].add(point1)
                     
+                    # get the two names of the edge created by these points
+                    edge_form1 = point1+';'+point2
+                    edge_form2 = point2+';'+point1
                     
+                    # if this edge isn't already in the dict, add it and assign a random conductance
+                    if edge_form1 not in edges.keys() and edge_form2 not in edges.keys():
+                        edges[edge_form1] = random.uniform(0,1)
+                    
+                   
+    # calculate K
+    K = calc_K(edges)
+                    
+                   
     # build the adjacency matrix
     
     total_points = len(points.keys())
@@ -158,7 +210,7 @@ def build_lattice(n):
     # loop through all points --> point_i
     for i in range(len(points_list)):
         # get neighborhood of point i
-        neighbors_i = points[points_list[i]]
+        neighbors_i = points[points_list[i]]['neighbors']
         # loop through all points --> point_j
         for j in range(len(points_list)):
             point_j = points_list[j]
@@ -181,7 +233,7 @@ def build_lattice(n):
         y = [point_y]
         
         # loop through all neighbors of that node
-        neighbors = points[point]
+        neighbors = points[point]['neighbors']
         for neighbor in neighbors:
             x_n, y_n = get_float_coords(neighbor)
             
@@ -203,12 +255,12 @@ def build_lattice(n):
     
     plt.show()
     
-    # return the list of neighbors (points), and the adjacency matrix
+    # return the list of points and their info (points), and the adjacency matrix
     return points, matrix
 
 
-# draw the lattice, get the list of neighbors, and get the adjacency matrix
-neighbors, adj_mat = build_lattice(n = 8)
+# draw the lattice, get the network data, and get the adjacency matrix
+network, adj_mat = build_lattice(n = 8)
 
 
     
