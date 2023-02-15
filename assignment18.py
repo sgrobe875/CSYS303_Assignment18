@@ -193,10 +193,6 @@ def build_lattice(n):
                         edges[edge_form1] = random.uniform(0,1)
                     
                    
-    # calculate K
-    K = calc_K(edges)
-                    
-                   
     # build the adjacency matrix
     
     total_points = len(points.keys())
@@ -253,14 +249,19 @@ def build_lattice(n):
     # make the figure a square        
     ax.set_aspect('equal', adjustable='box')
     
+    plt.title('Full Lattice')
+    
     plt.show()
     
-    # return the list of points and their info (points), and the adjacency matrix
-    return points, matrix
+    # return the list of points and their info (points), 
+    # edge list & their conductance (edges), and the adjacency matrix
+    return points, edges, matrix
 
 
 # draw the lattice, get the network data, and get the adjacency matrix
-network, adj_mat = build_lattice(n = 8)
+network, edges, adj_mat = build_lattice(n = 8)
 
+# get the value of K
+K = calc_K(edges)
 
     
