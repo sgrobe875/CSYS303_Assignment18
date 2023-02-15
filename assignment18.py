@@ -34,7 +34,7 @@ GAMMA = (2*gamma) / (gamma+1)
 
 # takes in the node of interest and the total number of nodes in the lattice and 
 # returns the current calculation as given in the instructions
-def sink_current(i_k, N):
+def sink_current(N):
     return (-1*i_0)/(N-1)
 
 
@@ -248,4 +248,69 @@ network, adj_mat, k_mat = build_lattice(n = 8)
 # get the value of K
 K = calc_K(k_mat)
 
+# list of points; starts with the source!
+points = list(network.keys())
     
+
+# build I vector
+I = [i_0]
+for i in range(1, len(adj_mat)):
+    I.append(sink_current(len(adj_mat)))
+
+
+
+
+for j in range(50):
+    # build lambda vector
+    lambda_v = []
+    for i in range(len(k_mat)):
+        lambda_v.append(np.sum(k_mat[i]))
+    
+    
+    # build DELTA matrix
+    LAMBDA_m = np.zeros((len(adj_mat), len(adj_mat)))
+    for i in range(len(lambda_v)):
+        LAMBDA_m.itemset((i,i), lambda_v[i])
+    
+    
+    
+    # build U vector
+    try:
+        U = np.matrix(np.matmul(np.linalg.inv(np.subtract(LAMBDA_m, k_mat)), I))
+    except:
+        print(j)
+        print(np.subtract(LAMBDA_m, k_mat))
+        break
+    # build delta_U
+    delta_U = np.subtract(U.T, U)
+    
+    
+    # build I_new
+    I_new = np.multiply(k_mat, delta_U)
+    
+    
+    
+    # calculate C (with workaround from https://stackoverflow.com/questions/45384602/numpy-runtimewarning-invalid-value-encountered-in-power)
+    C = np.sign(np.sum(I_new)) * (np.abs(np.sum(I_new))) ** (GAMMA)
+    
+    
+    
+    # calculate k_new
+    k_new = np.power(np.abs(I_new), (-1*(GAMMA - 2)))
+    
+    
+    
+    # finally, overwrite k
+    k_mat = np.divide(k_new,K)
+
+
+
+# finally, use I_new for width on graph
+
+
+
+
+
+
+
+
