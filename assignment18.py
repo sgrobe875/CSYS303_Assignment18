@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import math
 import numpy as np
 import random
+from scipy.optimize import minimize
 
 
 
@@ -56,8 +57,12 @@ def calc_distance(coord1_string, coord2_string):
 
 # takes in the edge list, returns K according to the randomly set conductances
 def calc_K(k_matrix):
-    ks_to_gamma_power = list(map(lambda x:pow(x,gamma),k_matrix))
-    sum_of_ks = np.sum(ks_to_gamma_power)/2
+    k_mat_copy = k_matrix.copy()
+    for i in range(len(k_matrix)):
+        for j in range(len(k_matrix)):
+            k_mat_copy.itemset((i,j), k_matrix[(i,j)]**gamma)
+    # ks_to_gamma_power = np.matrix(map(lambda x:pow(x,gamma),k_matrix))
+    sum_of_ks = np.sum(k_mat_copy)#/2
     return sum_of_ks ** (1/gamma)
 
 
@@ -248,6 +253,8 @@ network, adj_mat, k_mat = build_lattice(n = 8)
 # get the value of K
 K = calc_K(k_mat)
 
+k_mat = np.divide(k_mat,K)
+
 # list of points; starts with the source!
 points = list(network.keys())
     
@@ -257,17 +264,18 @@ I = [i_0]
 for i in range(1, len(adj_mat)):
     I.append(sink_current(len(adj_mat)))
 
-
-
-
-for j in range(50):
+    
+    
+Cs = []
+for j in range(10):
+    
     # build lambda vector
     lambda_v = []
     for i in range(len(k_mat)):
         lambda_v.append(np.sum(k_mat[i]))
     
     
-    # build DELTA matrix
+    # build LAMBDA matrix
     LAMBDA_m = np.zeros((len(adj_mat), len(adj_mat)))
     for i in range(len(lambda_v)):
         LAMBDA_m.itemset((i,i), lambda_v[i])
@@ -275,12 +283,10 @@ for j in range(50):
     
     
     # build U vector
-    try:
-        U = np.matrix(np.matmul(np.linalg.inv(np.subtract(LAMBDA_m, k_mat)), I))
-    except:
-        print(j)
-        print(np.subtract(LAMBDA_m, k_mat))
-        break
+    step1 = np.subtract(LAMBDA_m, k_mat)
+    U = np.matrix(np.matmul(np.linalg.inv(step1), I))
+    
+    
     # build delta_U
     delta_U = np.subtract(U.T, U)
     
@@ -290,19 +296,21 @@ for j in range(50):
     
     
     
-    # calculate C (with workaround from https://stackoverflow.com/questions/45384602/numpy-runtimewarning-invalid-value-encountered-in-power)
-    C = np.sign(np.sum(I_new)) * (np.abs(np.sum(I_new))) ** (GAMMA)
-    
+    # calculate C
+    C = np.sum(np.power(np.abs(I_new), GAMMA))
+
+    Cs.append(C)
     
     
     # calculate k_new
     k_new = np.power(np.abs(I_new), (-1*(GAMMA - 2)))
     
     
-    
     # finally, overwrite k
     k_mat = np.divide(k_new,K)
-
+    
+    # I = I_new.copy()
+        
 
 
 # finally, use I_new for width on graph
