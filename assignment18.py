@@ -1,6 +1,6 @@
 # Sarah Grobe
-# POCS HW 17
-# Due 2/10/23
+# POCS HW 18
+
 
 # imports
 import matplotlib.pyplot as plt
