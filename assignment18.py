@@ -27,7 +27,7 @@ from scipy.optimize import minimize
 
 # set globals
 i_0 = 1000
-gamma = 2
+gamma = 1/2
 GAMMA = (2*gamma) / (gamma+1)
 
 
@@ -206,196 +206,9 @@ def build_lattice(n):
 
     
     
-    # finally, plot
-    fig = plt.figure()
-    ax = fig.add_subplot()
-        
-    # plot lines between all neighbors
-    for point in list(points.keys()):
-        # start by adding points of the current node
-        point_x, point_y = get_float_coords(point)
-        x = [point_x]
-        y = [point_y]
-        
-        # loop through all neighbors of that node
-        neighbors = points[point]['neighbors']
-        for neighbor in neighbors:
-            x_n, y_n = get_float_coords(neighbor)
-            
-            # add coordinates of the neighbor, then re-add the points of the
-            # original node
-            x.append(x_n)
-            x.append(point_x)
-            y.append(y_n)
-            y.append(point_y)
-        
-        # plot and move on to the next point
-        # scale point size and line width based on n; make points a different color
-        plt.plot(x, y, c = 'black', marker=".", mfc='blue', mec='blue', 
-                 markersize=40/n, linewidth = 5/n)
-        
-
-    # make the figure a square        
-    ax.set_aspect('equal', adjustable='box')
-    
-    plt.title('Full Lattice')
-    
-    plt.show()
-    
-    # return the list of points and their info (points), 
-    # edge list & their conductance (edges), and the adjacency matrix
-    return points, adj_matrix, k_matrix
-
-
-# draw the lattice, get the network data, and get the adjacency matrix
-network, adj_mat, k_mat = build_lattice(n = 8)
-
-# get the value of K
-K = calc_K(k_mat)
-
-k_mat = np.divide(k_mat,K)
-
-# list of points; starts with the source!
-points = list(network.keys())
-    
-
-# build I vector
-I = [i_0]
-for i in range(1, len(adj_mat)):
-    I.append(sink_current(len(adj_mat)))
-
-    
-    
-# Cs = []
-# for j in range(50):
-#     try:
-#         # build lambda vector
-#         lambda_v = []
-#         for i in range(len(k_mat)):
-#             lambda_v.append(np.sum(k_mat[i]))
-        
-        
-#         # build LAMBDA matrix
-#         LAMBDA_m = np.zeros((len(adj_mat), len(adj_mat)))
-#         for i in range(len(lambda_v)):
-#             LAMBDA_m.itemset((i,i), lambda_v[i])
-        
-        
-        
-#         # build U vector
-#         step1 = np.subtract(LAMBDA_m, k_mat)
-#         # U = np.matrix(np.matmul(np.linalg.inv(step1), I))
-#         U = np.linalg.solve(step1, I)  
-        
-        
-#         # build delta_U
-#         delta_U = np.subtract(U.T, U)
-        
-        
-#         # build I_new
-#         I_new = np.multiply(k_mat, delta_U)
-        
-        
-        
-#         # calculate C
-#         C = np.sum(np.power(np.abs(I_new), GAMMA))
-    
-#         Cs.append(C)
-        
-        
-#         # calculate k_new
-#         k_new = np.power(np.abs(I_new), (-1*(GAMMA - 2)))
-        
-#         # K = calc_K(k_new)
-        
-#         # finally, overwrite k
-#         k_mat = np.divide(k_new,K)
-        
-#         # I = I_new
-        
-        
-        
-#         # U = np.linalg.solve(LAMBDA_minus_k, I)         
-#         # delta_U = np.subtract.outer(np.transpose(U),U)    
-#         # I_new = k*delta_U
-#         # k_new = np.abs(I_new)**(-(GAMMA-2))
-#         # #k = k_new
-#         # k = k_new/K
-#     except np.linalg.LinAlgError:
-#         print(j)
-#         break
-    
-    
-def optimization(I,k):
-    for j in range(50):
-
-        lamb = np.sum(k,axis=0) # GOOD
-       # print(lamb.shape)
-        LAMBDA = np.diag(lamb) # GOOD
-        LAMBDA_minus_k = np.subtract(LAMBDA,k) 
-        U = np.linalg.solve(LAMBDA_minus_k, I)         
-        delta_U = np.subtract.outer(np.transpose(U),U)    
-        I_new = k*delta_U
-        k_new = np.abs(I_new)**(-(GAMMA-2))
-        #k = k_new
-        k = k_new/K
-    return k
-        
-
-result = optimization(I,k_mat)
-
-
-def clean_noise(x):
-    for i in range(len(x)):
-        for j in range(len(x)):
-            if x[(i,j)] < 0.1:
-                x.itemset((i,j), 0)
-                
-    return x
-    
-# clean_noise_v = np.vectorize(clean_noise)
-
-result = clean_noise(result)
-
-
-
-
-# G2 = nx.from_numpy_matrix(result)
-
-# widths = nx.get_edge_attributes(G2, 'weight')
-
-# nx.draw(G2, pos = pos, node_size =1, node_color = "black",  width=list(np.cbrt( list(widths.values()))))
-
-
-# finally, use I_new for width on graph
-
-
-
-
-def draw_weighted(point_names, network, result, gamma):
-    n = len(points)
-    
-    # finally, plot
-    fig = plt.figure()
-    ax = fig.add_subplot()
-    
-    
-    # loop through each point and plot to its neighbors according to result
-    for point1 in point_names:
-        neighbors = network[point1]['neighbors']
-        for point2 in neighbors:
-            i = point_names.index(point1)
-            j = point_names.index(point2)
-            x_p1, y_p1 = get_float_coords(point1)
-            x_p2, y_p2 = get_float_coords(point2)
-            x = [x_p1, x_p2]
-            y = [y_p1, y_p2]
-            plt.plot(x,y, c='black', linewidth = result[(i,j)]*3)
-            
-    
-    
-    
-    
+    # # finally, plot
+    # fig = plt.figure()
+    # ax = fig.add_subplot()
         
     # # plot lines between all neighbors
     # for point in list(points.keys()):
@@ -422,12 +235,153 @@ def draw_weighted(point_names, network, result, gamma):
     #              markersize=40/n, linewidth = 5/n)
         
 
+    # # make the figure a square        
+    # ax.set_aspect('equal', adjustable='box')
+    
+    # plt.title('Full Lattice')
+    
+    # plt.show()
+    
+    # return the list of points and their info (points), 
+    # edge list & their conductance (edges), and the adjacency matrix
+    return points, adj_matrix, k_matrix
+
+
+# draw the lattice, get the network data, and get the adjacency matrix
+network, adj_mat, k_mat = build_lattice(n = 8)
+
+# get the value of K
+K = calc_K(k_mat)
+
+k_mat = np.divide(k_mat,K)
+
+# list of points; starts with the source!
+points = list(network.keys())
+    
+
+# build I vector
+I = [i_0]
+for i in range(1, len(adj_mat)):
+    I.append(sink_current(len(adj_mat)))
+
+    
+    
+Cs = []
+for j in range(50):
+        # build lambda vector
+        lambda_v = []
+        for i in range(len(k_mat)):
+            lambda_v.append(np.sum(k_mat[i]))
+        
+        
+        # build LAMBDA matrix
+        LAMBDA_m = np.zeros((len(adj_mat), len(adj_mat)))
+        for i in range(len(lambda_v)):
+            LAMBDA_m.itemset((i,i), lambda_v[i])
+        
+        
+        
+        # build U vector
+        step1 = np.subtract(LAMBDA_m, k_mat)
+        # U = np.matrix(np.matmul(np.linalg.inv(step1), I))
+        U = np.linalg.solve(step1, I)  
+        
+        
+        # build delta_U
+        delta_U = np.subtract.outer(U.T, U)
+        
+        
+        # build I_new
+        I_new = np.multiply(k_mat, delta_U)
+        
+        
+        
+        # calculate C
+        C = np.sum(np.power(np.abs(I_new), GAMMA))
+    
+        Cs.append(C)
+        
+        
+        # calculate k_new
+        k_new = np.power(np.abs(I_new), (-1*(GAMMA - 2)))
+        
+        # K = calc_K(k_new)
+        
+        # finally, overwrite k
+        k_mat = np.divide(k_new,K)
+        
+        # I = I_new
+        
+        
+        
+        # U = np.linalg.solve(LAMBDA_minus_k, I)         
+        # delta_U = np.subtract.outer(np.transpose(U),U)    
+        # I_new = k*delta_U
+        # k_new = np.abs(I_new)**(-(GAMMA-2))
+        # #k = k_new
+        # k = k_new/K
+        
+result = k_mat
+result = result/np.max(result)
+    
+# def optimization(I,k):
+#     for j in range(3):
+#         # K = calc_K(k)
+#         lamb = np.sum(k,axis=0) # GOOD
+#        # print(lamb.shape)
+#         LAMBDA = np.diag(lamb) # GOOD
+#         LAMBDA_minus_k = np.subtract(LAMBDA,k) 
+#         U = np.linalg.solve(LAMBDA_minus_k, I)         
+#         delta_U = np.subtract.outer(np.transpose(U),U)    
+#         I_new = k*delta_U
+#         k_new = np.abs(I_new)**(-(GAMMA-2))
+#         #k = k_new
+#         k = k_new/K
+#     return k
+        
+
+# result = optimization(I,k_mat)
+
+
+def clean_noise(x):
+    x = x*10
+    for i in range(len(x)):
+        for j in range(len(x)):
+            if x[(i,j)] < 0.2:
+                x.itemset((i,j), 0)
+                
+    return x
+    
+# clean_noise_v = np.vectorize(clean_noise)
+
+result = clean_noise(result)
+
+
+def draw_weighted(point_names, network, result, gamma):
+    n = len(points)
+    
+    # finally, plot
+    fig = plt.figure()
+    ax = fig.add_subplot()
+    
+    
+    # loop through each point and plot to its neighbors according to result
+    for point1 in point_names:
+        neighbors = network[point1]['neighbors']
+        for point2 in neighbors:
+            i = point_names.index(point1)
+            j = point_names.index(point2)
+            x_p1, y_p1 = get_float_coords(point1)
+            x_p2, y_p2 = get_float_coords(point2)
+            x = [x_p1, x_p2]
+            y = [y_p1, y_p2]
+            plt.plot(x,y, c='black', linewidth = result[(i,j)])
+            
+
     # make the figure a square        
     ax.set_aspect('equal', adjustable='box')
     
-    # title = 'Gamma = ' + str(gamma)
-    
-    plt.title('Gamma =' + str(gamma))
+    plt.title('Gamma = ' + str(gamma))
     
     plt.show()
     
