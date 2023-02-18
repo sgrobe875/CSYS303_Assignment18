@@ -27,7 +27,7 @@ from scipy.optimize import minimize
 
 # set globals
 i_0 = 1000
-gamma = 1/2
+gamma = 2
 GAMMA = (2*gamma) / (gamma+1)
 
 
@@ -206,45 +206,103 @@ def build_lattice(n):
 
     
     
-    # # finally, plot
-    # fig = plt.figure()
-    # ax = fig.add_subplot()
+    # finally, plot
+    fig = plt.figure()
+    ax = fig.add_subplot()
         
-    # # plot lines between all neighbors
-    # for point in list(points.keys()):
-    #     # start by adding points of the current node
-    #     point_x, point_y = get_float_coords(point)
-    #     x = [point_x]
-    #     y = [point_y]
+    # plot lines between all neighbors
+    for point in list(points.keys()):
+        # start by adding points of the current node
+        point_x, point_y = get_float_coords(point)
+        x = [point_x]
+        y = [point_y]
         
-    #     # loop through all neighbors of that node
-    #     neighbors = points[point]['neighbors']
-    #     for neighbor in neighbors:
-    #         x_n, y_n = get_float_coords(neighbor)
+        # loop through all neighbors of that node
+        neighbors = points[point]['neighbors']
+        for neighbor in neighbors:
+            x_n, y_n = get_float_coords(neighbor)
             
-    #         # add coordinates of the neighbor, then re-add the points of the
-    #         # original node
-    #         x.append(x_n)
-    #         x.append(point_x)
-    #         y.append(y_n)
-    #         y.append(point_y)
+            # add coordinates of the neighbor, then re-add the points of the
+            # original node
+            x.append(x_n)
+            x.append(point_x)
+            y.append(y_n)
+            y.append(point_y)
         
-    #     # plot and move on to the next point
-    #     # scale point size and line width based on n; make points a different color
-    #     plt.plot(x, y, c = 'black', marker=".", mfc='blue', mec='blue', 
-    #              markersize=40/n, linewidth = 5/n)
+        # plot and move on to the next point
+        # scale point size and line width based on n; make points a different color
+        plt.plot(x, y, c = 'black', marker=".", mfc='blue', mec='blue', 
+                  markersize=40/n, linewidth = 5/n)
         
 
-    # # make the figure a square        
-    # ax.set_aspect('equal', adjustable='box')
+    # make the figure a square        
+    ax.set_aspect('equal', adjustable='box')
     
-    # plt.title('Full Lattice')
+    plt.title('Full Lattice')
     
-    # plt.show()
+    plt.show()
     
     # return the list of points and their info (points), 
-    # edge list & their conductance (edges), and the adjacency matrix
+    # the adjacency matrix, and the k matrix
     return points, adj_matrix, k_matrix
+
+
+def draw_weighted(point_names, network, result, gamma):
+    n = len(points)
+    
+    # finally, plot
+    fig = plt.figure()
+    ax = fig.add_subplot()
+    
+    
+    # loop through each point and plot to its neighbors according to result
+    for point1 in point_names:
+        neighbors = network[point1]['neighbors']
+        for point2 in neighbors:
+            i = point_names.index(point1)
+            j = point_names.index(point2)
+            x_p1, y_p1 = get_float_coords(point1)
+            x_p2, y_p2 = get_float_coords(point2)
+            x = [x_p1, x_p2]
+            y = [y_p1, y_p2]
+            plt.plot(x,y, c='black', linewidth = result[(i,j)])
+            
+
+    # make the figure a square        
+    ax.set_aspect('equal', adjustable='box')
+    
+    plt.title('Gamma = ' + str(gamma))
+    
+    plt.show()
+
+def clean_noise(x):
+    if gamma == 0.5:
+        x = x*10
+        for i in range(len(x)):
+            for j in range(len(x)):
+                if x[(i,j)] < 0.2:
+                    x.itemset((i,j), 0)
+                    
+    else:
+        x = x*5
+        for i in range(len(x)):
+            for j in range(len(x)):
+                if x[(i,j)] < 0.5:
+                    x.itemset((i,j), 0)
+                
+    return x
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # draw the lattice, get the network data, and get the adjacency matrix
@@ -310,80 +368,15 @@ for j in range(50):
         # finally, overwrite k
         k_mat = np.divide(k_new,K)
         
-        # I = I_new
-        
-        
-        
-        # U = np.linalg.solve(LAMBDA_minus_k, I)         
-        # delta_U = np.subtract.outer(np.transpose(U),U)    
-        # I_new = k*delta_U
-        # k_new = np.abs(I_new)**(-(GAMMA-2))
-        # #k = k_new
-        # k = k_new/K
+
         
 result = k_mat
 result = result/np.max(result)
     
-# def optimization(I,k):
-#     for j in range(3):
-#         # K = calc_K(k)
-#         lamb = np.sum(k,axis=0) # GOOD
-#        # print(lamb.shape)
-#         LAMBDA = np.diag(lamb) # GOOD
-#         LAMBDA_minus_k = np.subtract(LAMBDA,k) 
-#         U = np.linalg.solve(LAMBDA_minus_k, I)         
-#         delta_U = np.subtract.outer(np.transpose(U),U)    
-#         I_new = k*delta_U
-#         k_new = np.abs(I_new)**(-(GAMMA-2))
-#         #k = k_new
-#         k = k_new/K
-#     return k
-        
-
-# result = optimization(I,k_mat)
-
-
-def clean_noise(x):
-    x = x*10
-    for i in range(len(x)):
-        for j in range(len(x)):
-            if x[(i,j)] < 0.2:
-                x.itemset((i,j), 0)
-                
-    return x
     
 # clean_noise_v = np.vectorize(clean_noise)
 
 result = clean_noise(result)
-
-
-def draw_weighted(point_names, network, result, gamma):
-    n = len(points)
-    
-    # finally, plot
-    fig = plt.figure()
-    ax = fig.add_subplot()
-    
-    
-    # loop through each point and plot to its neighbors according to result
-    for point1 in point_names:
-        neighbors = network[point1]['neighbors']
-        for point2 in neighbors:
-            i = point_names.index(point1)
-            j = point_names.index(point2)
-            x_p1, y_p1 = get_float_coords(point1)
-            x_p2, y_p2 = get_float_coords(point2)
-            x = [x_p1, x_p2]
-            y = [y_p1, y_p2]
-            plt.plot(x,y, c='black', linewidth = result[(i,j)])
-            
-
-    # make the figure a square        
-    ax.set_aspect('equal', adjustable='box')
-    
-    plt.title('Gamma = ' + str(gamma))
-    
-    plt.show()
     
 
 draw_weighted(points, network, result, gamma)
